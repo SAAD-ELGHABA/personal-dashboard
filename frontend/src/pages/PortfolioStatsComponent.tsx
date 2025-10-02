@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 import { apiService } from '../services/api';
 import type { PortfolioStats } from '../types';
 
-export const PortfolioStats: React.FC = () => {
+export const PortfolioStatsComponent: React.FC = () => {
   const [stats, setStats] = useState<PortfolioStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 

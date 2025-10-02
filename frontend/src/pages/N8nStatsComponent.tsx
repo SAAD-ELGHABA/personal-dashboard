@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 import { apiService } from '../services/api';
 import { formatDateTime, formatDuration } from '../lib/utils';
 import type { N8nStats } from '../types';
-
+import type { PieLabelRenderProps } from 'recharts';
 const COLORS = ['#10b981', '#ef4444'];
 
 export const N8nStatsComponent: React.FC = () => {
@@ -104,20 +104,22 @@ export const N8nStatsComponent: React.FC = () => {
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
-                <Pie
-                  data={chartData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
+              <Pie
+              data={chartData}
+              cx="50%"
+              cy="50%"
+              labelLine={false}
+              label={(props: PieLabelRenderProps) =>
+                `${props.name}: ${((typeof props.percent === 'number' ? props.percent : 0) * 100).toFixed(0)}%`
+              }
+              outerRadius={80}
+              fill="#8884d8"
+              dataKey="value"
+            >
+              {chartData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              ))}
+            </Pie>
                 <Tooltip />
                 <Legend />
               </PieChart>
