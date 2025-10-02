@@ -5,7 +5,7 @@ import { Sidebar } from './components/Sidebar';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { Overview } from './pages/Overview';
-import { N8nStats } from './pages/N8nStats';
+import { N8nStatsComponent } from './pages/N8nStatsComponent.tsx';
 import { PortfolioStats } from './pages/PortfolioStats';
 import { ApiManagement } from './pages/ApiManagement';
 import { Settings } from './pages/Settings';
@@ -62,7 +62,7 @@ function App() {
             element={
               <ProtectedRoute>
                 <DashboardLayout>
-                  <N8nStats />
+                  <N8nStatsComponent />
                 </DashboardLayout>
               </ProtectedRoute>
             }

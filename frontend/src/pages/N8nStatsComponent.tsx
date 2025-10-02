@@ -7,7 +7,7 @@ import type { N8nStats } from '../types';
 
 const COLORS = ['#10b981', '#ef4444'];
 
-export const N8nStats: React.FC = () => {
+export const N8nStatsComponent: React.FC = () => {
   const [stats, setStats] = useState<N8nStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
