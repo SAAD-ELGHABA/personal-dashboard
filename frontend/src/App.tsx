@@ -3,12 +3,14 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Sidebar } from './components/Sidebar';
 import { Login } from './pages/Login';
-import { Register } from './pages/Register';
 import { Overview } from './pages/Overview';
 import { N8nStatsComponent } from './pages/N8nStatsComponent.tsx';
 import { PortfolioStatsComponent } from './pages/PortfolioStatsComponent.tsx';
 import { ApiManagement } from './pages/ApiManagement';
 import { Settings } from './pages/Settings';
+import { AiModels } from './pages/AiModels';
+import { Projects } from './pages/Projects';
+import { MyBlogs } from './pages/MyBlogs';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { token, isLoading } = useAuth();
@@ -44,7 +46,6 @@ function App() {
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
           
           <Route
             path="/"
@@ -96,6 +97,39 @@ function App() {
               <ProtectedRoute>
                 <DashboardLayout>
                   <Settings />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/ai-models"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <AiModels />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/projects"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <Projects />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/blogs"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <MyBlogs />
                 </DashboardLayout>
               </ProtectedRoute>
             }

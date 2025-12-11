@@ -6,7 +6,10 @@ import {
   Briefcase, 
   Key, 
   Settings, 
-  LogOut 
+  LogOut,
+  Bot,
+  FolderKanban,
+  BookOpen
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
@@ -15,6 +18,9 @@ const navItems = [
   { name: 'Overview', path: '/', icon: LayoutDashboard },
   { name: 'n8n Stats', path: '/n8n', icon: Workflow },
   { name: 'Portfolio Stats', path: '/portfolio', icon: Briefcase },
+  { name: 'AI Models', path: '/ai-models', icon: Bot },
+  { name: 'Projects', path: '/projects', icon: FolderKanban },
+  { name: 'My Blogs', path: '/blogs', icon: BookOpen },
   { name: 'API Management', path: '/api-tokens', icon: Key },
   { name: 'Settings', path: '/settings', icon: Settings },
 ];

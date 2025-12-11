@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authenticate, authorize } from '../middleware/auth';
 import * as apiController from '../controllers/api';
+import { projectRouter } from './project';
 
 export const apiRouter = Router();
 
@@ -23,6 +24,9 @@ apiRouter.get('/stats/n8n', apiController.getN8nStats);
 
 // Portfolio Stats
 apiRouter.get('/stats/portfolio', apiController.getPortfolioStats);
+
+// Project Management Routes
+apiRouter.use('/projects', projectRouter);
 
 // Admin routes
 apiRouter.use(authorize('admin'));

@@ -14,52 +14,6 @@ const generateToken = (userId: string, role: string): string => {
   );
 };
 
-// Register a new user
-export const register = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const { username, email, password, role } = req.body;
-
-    // Check if user already exists
-    const existingUser = await User.findOne({
-      $or: [{ email }, { username }],
-    });
-
-    if (existingUser) {
-      throw new ApiError(400, 'User already exists with this email or username');
-    }
-
-    // Create new user
-    const user = await User.create({
-      username,
-      email,
-      password,
-      role: role || 'user',
-    });
-
-    // Generate token
-    const token = generateToken((user._id as any).toString(), user.role);
-
-    res.status(201).json({
-      success: true,
-      data: {
-        user: {
-          id: user._id,
-          username: user.username,
-          email: user.email,
-          role: user.role,
-        },
-        token,
-      },
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
 // Login user
 export const login = async (
   req: Request,

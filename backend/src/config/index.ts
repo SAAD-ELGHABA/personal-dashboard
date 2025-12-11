@@ -21,4 +21,7 @@ export const config = {
   portfolio: {
     baseUrl: process.env.PORTFOLIO_BASE_URL || 'http://localhost:3001/api',
   },
+  ADMIN_EMAIL: process.env.ADMIN_EMAIL || 'admin@example.com',
+  ADMIN_PWD: process.env.ADMIN_PWD || 'adminpassword',
+  corsOrigin: process.env.CORS_ORIGIN || '*',
 };

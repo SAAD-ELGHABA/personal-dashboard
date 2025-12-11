@@ -1,5 +1,16 @@
 import axios from 'axios';
-import type { AuthResponse, ApiToken, N8nStats, PortfolioStats } from '../types';
+import type { 
+  AuthResponse, 
+  ApiToken, 
+  N8nStats, 
+  PortfolioStats,
+  Project,
+  ProjectSettings,
+  ModelType,
+  CreateProjectDTO,
+  UpdateProjectDTO,
+  UpdateProjectSettingsDTO
+} from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -37,15 +48,6 @@ class ApiService {
   }
 
   // Auth endpoints
-  async register(username: string, email: string, password: string): Promise<AuthResponse> {
-    const response = await this.api.post<AuthResponse>('/api/auth/register', {
-      username,
-      email,
-      password,
-    });
-    return response.data;
-  }
-
   async login(email: string, password: string): Promise<AuthResponse> {
     const response = await this.api.post<AuthResponse>('/api/auth/login', {
       email,
@@ -91,6 +93,65 @@ class ApiService {
 
   async getPortfolioStats(): Promise<{ success: boolean; data: PortfolioStats }> {
     const response = await this.api.get('/api/stats/portfolio');
+    return response.data;
+  }
+
+  // Project Management endpoints
+  async getProjects(includeInactive?: boolean): Promise<{ success: boolean; data: { projects: Project[] } }> {
+    const response = await this.api.get('/api/projects', {
+      params: { includeInactive },
+    });
+    return response.data;
+  }
+
+  async getProject(id: string): Promise<{ success: boolean; data: { project: Project; settings: ProjectSettings } }> {
+    const response = await this.api.get(`/api/projects/${id}`);
+    return response.data;
+  }
+
+  async createProject(
+    data: CreateProjectDTO
+  ): Promise<{ 
+    success: boolean; 
+    data: { 
+      project: Project; 
+      apiToken: string; 
+      settings: ProjectSettings 
+    }; 
+    message: string 
+  }> {
+    const response = await this.api.post('/api/projects', data);
+    return response.data;
+  }
+
+  async updateProject(
+    id: string,
+    data: UpdateProjectDTO
+  ): Promise<{ success: boolean; data: { project: Project }; message: string }> {
+    const response = await this.api.put(`/api/projects/${id}`, data);
+    return response.data;
+  }
+
+  async updateProjectSettings(
+    id: string,
+    data: UpdateProjectSettingsDTO
+  ): Promise<{ success: boolean; data: { settings: ProjectSettings }; message: string }> {
+    const response = await this.api.put(`/api/projects/${id}/settings`, data);
+    return response.data;
+  }
+
+  async deleteProject(id: string): Promise<{ success: boolean; message: string }> {
+    const response = await this.api.delete(`/api/projects/${id}`);
+    return response.data;
+  }
+
+  async regenerateApiToken(id: string): Promise<{ success: boolean; data: { apiToken: string }; message: string }> {
+    const response = await this.api.post(`/api/projects/${id}/regenerate-token`);
+    return response.data;
+  }
+
+  async getModelTypes(): Promise<{ success: boolean; data: { modelTypes: ModelType[] } }> {
+    const response = await this.api.get('/api/projects/model-types');
     return response.data;
   }
 }

@@ -1,12 +1,16 @@
 import { app } from './app';
 import { connectDB } from './config/database';
 import { config } from './config';
+import { initializeData } from './config/dataInitializer';
+import { initializeModelTypes } from './config/modelTypesInitializer';
 
 const PORT = config.port || 5000;
 
 const startServer = async () => {
   try {
     await connectDB();
+    await initializeData();
+    await initializeModelTypes();
     
     const server = app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);

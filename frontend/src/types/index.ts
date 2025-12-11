@@ -24,6 +24,62 @@ export interface ApiToken {
   isActive: boolean;
 }
 
+export interface ModelType {
+  _id: string;
+  key: string;
+  name: string;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Project {
+  _id: string;
+  name: string;
+  description?: string;
+  apiToken: {
+    _id: string;
+    name: string;
+    scopes: string[];
+    expiresAt: string;
+    lastUsedAt?: string;
+    isActive: boolean;
+  };
+  modelTypesAllowed: ModelType[];
+  ownerId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProjectSettings {
+  _id: string;
+  projectId: string;
+  allowedModelTypes: ModelType[];
+  maxRequestSize: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateProjectDTO {
+  name: string;
+  description?: string;
+  modelTypesAllowed: string[];
+  maxRequestSize?: number;
+}
+
+export interface UpdateProjectDTO {
+  name?: string;
+  description?: string;
+  modelTypesAllowed?: string[];
+}
+
+export interface UpdateProjectSettingsDTO {
+  allowedModelTypes?: string[];
+  maxRequestSize?: number;
+  isActive?: boolean;
+}
+
 export interface N8nStats {
   workflows: {
     total: number;
@@ -71,3 +127,4 @@ export interface DashboardStats {
   totalPortfolioVisits: number;
   connectedApps: number;
 }
+

@@ -7,7 +7,7 @@ interface IApiToken extends Document {
   token: string;
   scopes: TokenScope[];
   expiresAt: Date;
-  userId: mongoose.Types.ObjectId;
+  projectId: mongoose.Types.ObjectId;
   lastUsedAt?: Date;
   isActive: boolean;
 }
@@ -36,10 +36,11 @@ const apiTokenSchema = new Schema<IApiToken>(
       type: Date,
       required: true,
     },
-    userId: {
+    projectId: {
       type: Schema.Types.ObjectId,
-      ref: 'User',
+      ref: 'Project',
       required: true,
+      index: true,
     },
     lastUsedAt: {
       type: Date,
@@ -55,8 +56,8 @@ const apiTokenSchema = new Schema<IApiToken>(
 // Index for token expiration
 apiTokenSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
-// Index for user lookup
-apiTokenSchema.index({ userId: 1, isActive: 1 });
+// Index for project lookup
+apiTokenSchema.index({ projectId: 1, isActive: 1 });
 
 const ApiToken = mongoose.model<IApiToken>('ApiToken', apiTokenSchema);
 
