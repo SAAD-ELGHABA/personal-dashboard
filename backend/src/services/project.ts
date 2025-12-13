@@ -8,6 +8,7 @@ import mongoose from 'mongoose';
 
 interface CreateProjectDTO {
   name: string;
+  url: string;
   description?: string;
   modelTypesAllowed: string[];
   ownerId: string;
@@ -16,6 +17,7 @@ interface CreateProjectDTO {
 
 interface UpdateProjectDTO {
   name?: string;
+  url?: string;
   description?: string;
   modelTypesAllowed?: string[];
 }
@@ -88,6 +90,15 @@ class ProjectService {
         throw new ApiError(409, 'Project with this name already exists');
       }
 
+      // Check if URL already exists
+      const existingUrl = await Project.findOne({
+        url: data.url,
+      });
+
+      if (existingUrl) {
+        throw new ApiError(409, 'Project with this URL already exists');
+      }
+
       // Generate API token
       const rawToken = this.generateApiToken();
       const hashedToken = this.hashToken(rawToken);
@@ -112,6 +123,7 @@ class ProjectService {
         [
           {
             name: data.name,
+            url: data.url,
             description: data.description || '',
             apiToken: apiTokenDoc[0]._id,
             modelTypesAllowed: data.modelTypesAllowed,
@@ -227,6 +239,18 @@ class ProjectService {
     // Validate model types if provided
     if (data.modelTypesAllowed) {
       await this.validateModelTypes(data.modelTypesAllowed);
+    }
+
+    // Check if URL is being updated and if it already exists
+    if (data.url) {
+      const existingUrl = await Project.findOne({
+        url: data.url,
+        _id: { $ne: projectId }, // Exclude current project
+      });
+
+      if (existingUrl) {
+        throw new ApiError(409, 'Project with this URL already exists');
+      }
     }
 
     const project = await Project.findOneAndUpdate(
@@ -403,10 +427,11 @@ class ProjectService {
   }
 
   /**
+  /**
    * Get available model types
    */
   async getAvailableModelTypes() {
-    return await ModelType.find().sort({ name: 1 });
+    return await ModelType.find({ isActive: true }).sort({ order: 1, name: 1 });
   }
 }
 

@@ -2,6 +2,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 
 interface IProject extends Document {
   name: string;
+  url: string;
   description: string;
   apiToken: mongoose.Types.ObjectId;
   modelTypesAllowed: mongoose.Types.ObjectId[];
@@ -16,6 +17,13 @@ const projectSchema = new Schema<IProject>(
       type: String,
       required: true,
       trim: true,
+    },
+    url: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+      lowercase: true,
     },
     description: {
       type: String,
@@ -43,8 +51,9 @@ const projectSchema = new Schema<IProject>(
   { timestamps: true }
 );
 
-// Index for owner lookup
+// Indexes
 projectSchema.index({ ownerId: 1 });
+projectSchema.index({ url: 1 }, { unique: true });
 
 const Project = mongoose.model<IProject>('Project', projectSchema);
 

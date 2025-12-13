@@ -55,6 +55,7 @@ export const Projects: React.FC = () => {
 
   const handleCreateProject = async (data: {
     name: string;
+    url: string;
     description: string;
     modelTypesAllowed: string[];
     maxRequestSize: number;

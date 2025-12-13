@@ -7,6 +7,9 @@ import type {
   Project,
   ProjectSettings,
   ModelType,
+  Model,
+  ModelHealthStatus,
+  ModelStatistics,
   CreateProjectDTO,
   UpdateProjectDTO,
   UpdateProjectSettingsDTO
@@ -50,6 +53,15 @@ class ApiService {
   // Auth endpoints
   async login(email: string, password: string): Promise<AuthResponse> {
     const response = await this.api.post<AuthResponse>('/api/auth/login', {
+      email,
+      password,
+    });
+    return response.data;
+  }
+
+  async register(username: string, email: string, password: string): Promise<AuthResponse> {
+    const response = await this.api.post<AuthResponse>('/api/auth/register', {
+      username,
       email,
       password,
     });
@@ -150,8 +162,140 @@ class ApiService {
     return response.data;
   }
 
-  async getModelTypes(): Promise<{ success: boolean; data: { modelTypes: ModelType[] } }> {
-    const response = await this.api.get('/api/projects/model-types');
+  async getModelTypes(): Promise<{ success: boolean; data: { modelTypes: ModelType[]; count: number } }> {
+    const response = await this.api.get('/api/model-types');
+    return response.data;
+  }
+
+  // Model Management endpoints
+  async getModels(filters?: {
+    typeId?: string;
+    provider?: string;
+    status?: string;
+    isPublic?: boolean;
+    projectId?: string;
+    tags?: string[];
+  }): Promise<{ success: boolean; data: { models: Model[]; count: number } }> {
+    const params = new URLSearchParams();
+    if (filters?.typeId) params.append('typeId', filters.typeId);
+    if (filters?.provider) params.append('provider', filters.provider);
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.isPublic !== undefined) params.append('isPublic', String(filters.isPublic));
+    if (filters?.projectId) params.append('projectId', filters.projectId);
+    if (filters?.tags) params.append('tags', filters.tags.join(','));
+
+    const response = await this.api.get(`/api/models?${params.toString()}`);
+    return response.data;
+  }
+
+  async getModel(id: string): Promise<{ success: boolean; data: { model: Model } }> {
+    const response = await this.api.get(`/api/models/${id}`);
+    return response.data;
+  }
+
+  async createModel(data: Partial<Model>): Promise<{ success: boolean; data: { model: Model }; message: string }> {
+    const response = await this.api.post('/api/models', data);
+    return response.data;
+  }
+
+  async updateModel(id: string, data: Partial<Model>): Promise<{ success: boolean; data: { model: Model }; message: string }> {
+    const response = await this.api.put(`/api/models/${id}`, data);
+    return response.data;
+  }
+
+  async deleteModel(id: string): Promise<{ success: boolean; message: string }> {
+    const response = await this.api.delete(`/api/models/${id}`);
+    return response.data;
+  }
+
+  async getModelHealth(id: string): Promise<{ 
+    success: boolean; 
+    data: { 
+      model: Partial<Model>;
+      health: ModelHealthStatus | null;
+      statistics: ModelStatistics | null;
+    } 
+  }> {
+    const response = await this.api.get(`/api/models/${id}/health`);
+    return response.data;
+  }
+
+  async testModelConnection(id: string): Promise<{ 
+    success: boolean; 
+    data: { success: boolean; latencyMs?: number; error?: string };
+    message: string;
+  }> {
+    const response = await this.api.post(`/api/models/${id}/test`);
+    return response.data;
+  }
+
+  async getAvailableModels(typeId: string, projectId?: string): Promise<{ 
+    success: boolean; 
+    data: { models: Model[]; count: number } 
+  }> {
+    const params = projectId ? `?projectId=${projectId}` : '';
+    const response = await this.api.get(`/api/models/type/${typeId}/available${params}`);
+    return response.data;
+  }
+
+  // Model Type Management endpoints
+  async getModelType(id: string): Promise<{ success: boolean; data: { modelType: ModelType } }> {
+    const response = await this.api.get(`/api/model-types/${id}`);
+    return response.data;
+  }
+
+  async getModelTypesByCategory(category: string): Promise<{ 
+    success: boolean; 
+    data: { modelTypes: ModelType[]; count: number } 
+  }> {
+    const response = await this.api.get(`/api/model-types/category/${category}`);
+    return response.data;
+  }
+
+  async getModelTypeWithStats(id: string): Promise<{ 
+    success: boolean; 
+    data: { 
+      modelType: ModelType;
+      stats: {
+        totalModels: number;
+        activeModels: number;
+        inactiveModels: number;
+        unhealthyModels: number;
+      };
+    } 
+  }> {
+    const response = await this.api.get(`/api/model-types/${id}/stats`);
+    return response.data;
+  }
+
+  async createModelType(data: Partial<ModelType>): Promise<{ 
+    success: boolean; 
+    data: { modelType: ModelType }; 
+    message: string 
+  }> {
+    const response = await this.api.post('/api/model-types', data);
+    return response.data;
+  }
+
+  async updateModelType(id: string, data: Partial<ModelType>): Promise<{ 
+    success: boolean; 
+    data: { modelType: ModelType }; 
+    message: string 
+  }> {
+    const response = await this.api.put(`/api/model-types/${id}`, data);
+    return response.data;
+  }
+
+  async deleteModelType(id: string): Promise<{ success: boolean; message: string }> {
+    const response = await this.api.delete(`/api/model-types/${id}`);
+    return response.data;
+  }
+
+  async updateModelTypeOrder(orders: { id: string; order: number }[]): Promise<{ 
+    success: boolean; 
+    message: string 
+  }> {
+    const response = await this.api.post('/api/model-types/reorder', { orders });
     return response.data;
   }
 }

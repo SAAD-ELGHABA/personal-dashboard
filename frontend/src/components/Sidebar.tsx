@@ -9,7 +9,8 @@ import {
   LogOut,
   Bot,
   FolderKanban,
-  BookOpen
+  BookOpen,
+  Boxes
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
@@ -19,6 +20,7 @@ const navItems = [
   { name: 'n8n Stats', path: '/n8n', icon: Workflow },
   { name: 'Portfolio Stats', path: '/portfolio', icon: Briefcase },
   { name: 'AI Models', path: '/ai-models', icon: Bot },
+  { name: 'Model Types', path: '/model-types', icon: Boxes },
   { name: 'Projects', path: '/projects', icon: FolderKanban },
   { name: 'My Blogs', path: '/blogs', icon: BookOpen },
   { name: 'API Management', path: '/api-tokens', icon: Key },

@@ -59,11 +59,22 @@ export const createProject = async (
   next: NextFunction
 ) => {
   try {
-    const { name, description, modelTypesAllowed, maxRequestSize } = req.body;
+    const { name, url, description, modelTypesAllowed, maxRequestSize } = req.body;
 
     // Validation
     if (!name || name.trim().length === 0) {
       throw new ApiError(400, 'Project name is required');
+    }
+
+    if (!url || url.trim().length === 0) {
+      throw new ApiError(400, 'Project URL is required');
+    }
+
+    // Basic URL validation
+    try {
+      new URL(url);
+    } catch {
+      throw new ApiError(400, 'Invalid URL format');
     }
 
     if (!modelTypesAllowed || !Array.isArray(modelTypesAllowed) || modelTypesAllowed.length === 0) {
@@ -72,6 +83,7 @@ export const createProject = async (
 
     const result = await projectService.createProject({
       name: name.trim(),
+      url: url.trim().toLowerCase(),
       description: description?.trim(),
       modelTypesAllowed,
       ownerId: req.user.userId,
@@ -101,10 +113,19 @@ export const updateProject = async (
   next: NextFunction
 ) => {
   try {
-    const { name, description, modelTypesAllowed } = req.body;
+    const { name, url, description, modelTypesAllowed } = req.body;
 
     const updateData: any = {};
     if (name !== undefined) updateData.name = name.trim();
+    if (url !== undefined) {
+      // Validate URL if provided
+      try {
+        new URL(url);
+        updateData.url = url.trim().toLowerCase();
+      } catch {
+        throw new ApiError(400, 'Invalid URL format');
+      }
+    }
     if (description !== undefined) updateData.description = description.trim();
     if (modelTypesAllowed !== undefined) updateData.modelTypesAllowed = modelTypesAllowed;
 

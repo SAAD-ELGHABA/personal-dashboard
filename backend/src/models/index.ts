@@ -7,6 +7,13 @@ export * from './Project';
 export * from './ProjectSettings';
 export * from './ProjectPrompt';
 export * from './ProjectUsageStatistics';
+export * from './ProjectHealthCheck';
+export * from './ProjectSslDns';
+export * from './ProjectSeoReport';
+export * from './ProjectPerformanceReport';
+export * from './ProjectCrawledPages';
+export * from './ProjectBacklinks';
+export * from './MonitoringTask';
 
 // Models
 export * from './ModelType';

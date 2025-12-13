@@ -29,13 +29,89 @@ export interface ModelType {
   key: string;
   name: string;
   description?: string;
+  category: 'text' | 'image' | 'audio' | 'video' | 'embedding' | 'multimodal' | 'tool';
+  icon?: string;
+  capabilities?: string[];
+  isActive: boolean;
+  requiresAuth: boolean;
+  defaultMaxTokens?: number;
+  defaultTemperature?: number;
+  order: number;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface Model {
+  _id: string;
+  name: string;
+  typeId: {
+    _id: string;
+    key: string;
+    name: string;
+    description?: string;
+    category: string;
+  };
+  version: string;
+  provider: 'openai' | 'anthropic' | 'cohere' | 'google' | 'local' | 'custom';
+  modelId: string;
+  endpoint?: string;
+  description?: string;
+  status: 'active' | 'inactive' | 'maintenance' | 'unhealthy';
+  priority: number;
+  weight: number;
+  maxTokens: number;
+  temperature: number;
+  topP?: number;
+  frequencyPenalty?: number;
+  presencePenalty?: number;
+  maxRequestsPerMinute: number;
+  maxConcurrentRequests: number;
+  timeout?: number;
+  timeoutSeconds: number;
+  retryAttempts: number;
+  retryDelay?: number;
+  retryDelayMs: number;
+  costPer1kInputTokens?: number;
+  costPer1kOutputTokens?: number;
+  costPerRequest?: number;
+  expirationDate?: string;
+  tags: string[];
+  metadata: Record<string, any>;
+  projectsAssigned: string[];
+  isPublic: boolean;
+  requiresApproval: boolean;
+  lastHealthCheck?: string;
+  healthStatus?: ModelHealthStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ModelHealthStatus {
+  modelId: string;
+  lastCheckedAt: string;
+  latencyMs: number;
+  errorRate: number;
+  isHealthy: boolean;
+  lastError?: string;
+  cpuUsage?: number;
+  memoryUsage?: number;
+}
+
+export interface ModelStatistics {
+  modelId: string;
+  totalRequests: number;
+  successfulRequests: number;
+  failedRequests: number;
+  avgLatency: number;
+  lastUsedAt?: string;
+  monthlyUsage: number;
+  monthlyLimit: number;
 }
 
 export interface Project {
   _id: string;
   name: string;
+  url: string;
   description?: string;
   apiToken: {
     _id: string;
@@ -63,6 +139,7 @@ export interface ProjectSettings {
 
 export interface CreateProjectDTO {
   name: string;
+  url: string;
   description?: string;
   modelTypesAllowed: string[];
   maxRequestSize?: number;
@@ -70,6 +147,7 @@ export interface CreateProjectDTO {
 
 export interface UpdateProjectDTO {
   name?: string;
+  url?: string;
   description?: string;
   modelTypesAllowed?: string[];
 }

@@ -9,6 +9,7 @@ import { PortfolioStatsComponent } from './pages/PortfolioStatsComponent.tsx';
 import { ApiManagement } from './pages/ApiManagement';
 import { Settings } from './pages/Settings';
 import { AiModels } from './pages/AiModels';
+import { ModelTypes } from './pages/ModelTypes';
 import { Projects } from './pages/Projects';
 import { MyBlogs } from './pages/MyBlogs';
 
@@ -108,6 +109,17 @@ function App() {
               <ProtectedRoute>
                 <DashboardLayout>
                   <AiModels />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/model-types"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <ModelTypes />
                 </DashboardLayout>
               </ProtectedRoute>
             }

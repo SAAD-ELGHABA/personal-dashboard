@@ -42,6 +42,18 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 {isActive ? 'Active' : 'Inactive'}
               </Badge>
             </CardTitle>
+            {project.url && (
+              <p className="text-sm text-blue-600 dark:text-blue-400 mb-1">
+                <a
+                  href={project.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:underline"
+                >
+                  {project.url}
+                </a>
+              </p>
+            )}
             {project.description && (
               <p className="text-sm text-muted-foreground">
                 {project.description}

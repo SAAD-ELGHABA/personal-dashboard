@@ -10,6 +10,7 @@ interface ProjectFormModalProps {
   onClose: () => void;
   onSubmit: (data: {
     name: string;
+    url: string;
     description: string;
     modelTypesAllowed: string[];
     maxRequestSize: number;
@@ -29,6 +30,7 @@ export const ProjectFormModal: React.FC<ProjectFormModalProps> = ({
 }) => {
   const [formData, setFormData] = useState({
     name: '',
+    url: '',
     description: '',
     modelTypesAllowed: [] as string[],
     maxRequestSize: 1,
@@ -40,6 +42,7 @@ export const ProjectFormModal: React.FC<ProjectFormModalProps> = ({
     if (project) {
       setFormData({
         name: project.name,
+        url: project.url,
         description: project.description || '',
         modelTypesAllowed: project.modelTypesAllowed.map((mt) => mt._id),
         maxRequestSize: 1,
@@ -47,6 +50,7 @@ export const ProjectFormModal: React.FC<ProjectFormModalProps> = ({
     } else {
       setFormData({
         name: '',
+        url: '',
         description: '',
         modelTypesAllowed: [],
         maxRequestSize: 1,
@@ -60,6 +64,17 @@ export const ProjectFormModal: React.FC<ProjectFormModalProps> = ({
 
     if (!formData.name.trim()) {
       newErrors.name = 'Project name is required';
+    }
+
+    if (!formData.url.trim()) {
+      newErrors.url = 'Project URL is required';
+    } else {
+      // Basic URL validation
+      try {
+        new URL(formData.url);
+      } catch {
+        newErrors.url = 'Please enter a valid URL (e.g., https://example.com)';
+      }
     }
 
     if (formData.modelTypesAllowed.length === 0) {
@@ -123,6 +138,28 @@ export const ProjectFormModal: React.FC<ProjectFormModalProps> = ({
           {errors.name && (
             <p className="text-sm text-red-500 mt-1">{errors.name}</p>
           )}
+        </div>
+
+        {/* Project URL */}
+        <div>
+          <label className="block text-sm font-medium mb-2">
+            Project URL <span className="text-red-500">*</span>
+          </label>
+          <Input
+            value={formData.url}
+            onChange={(e) =>
+              setFormData({ ...formData, url: e.target.value })
+            }
+            placeholder="https://myapp.com"
+            disabled={isLoading}
+            type="url"
+          />
+          {errors.url && (
+            <p className="text-sm text-red-500 mt-1">{errors.url}</p>
+          )}
+          <p className="text-xs text-muted-foreground mt-1">
+            The URL of your project for monitoring purposes
+          </p>
         </div>
 
         {/* Description */}
