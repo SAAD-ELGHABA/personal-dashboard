@@ -4,6 +4,7 @@ import * as apiController from '../controllers/api';
 import { projectRouter } from './project';
 import { modelRouter } from './model';
 import { modelTypeRouter } from './modelType';
+import serviceRouter from './service';
 
 export const apiRouter = Router();
 
@@ -29,6 +30,9 @@ apiRouter.get('/stats/portfolio', apiController.getPortfolioStats);
 
 // Project Management Routes
 apiRouter.use('/projects', projectRouter);
+
+// Service Management Routes
+apiRouter.use('/services', serviceRouter);
 
 // Model Registry Routes
 apiRouter.use('/models', modelRouter);

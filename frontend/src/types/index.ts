@@ -206,3 +206,134 @@ export interface DashboardStats {
   connectedApps: number;
 }
 
+// Service Monitoring Types
+export type ServiceType = 'FRONTEND' | 'API' | 'AI' | 'WORKER' | 'GATEWAY';
+export type ServiceHealthStatus = 'UP' | 'DEGRADED' | 'DOWN';
+export type AvailabilityPeriod = '24h' | '7d' | '30d';
+export type ProjectHealthStatus = 'UP' | 'DEGRADED' | 'DOWN';
+export type DnsRecordType = 'A' | 'AAAA' | 'CNAME';
+export type MonitoringTaskType = 'HEALTH' | 'PERFORMANCE' | 'SEO' | 'SSL' | 'DNS';
+
+export interface Service {
+  _id: string;
+  projectId: string;
+  name: string;
+  type: ServiceType;
+  baseUrl: string;
+  probePath: string;
+  expectedHttpStatus: number;
+  timeoutMs: number;
+  isCritical: boolean;
+  isPublic: boolean;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  latestHealth?: ServiceHealthCheck;
+}
+
+export interface ServiceHealthCheck {
+  _id: string;
+  serviceId: string;
+  status: ServiceHealthStatus;
+  httpStatus: number | null;
+  responseTimeMs: number | null;
+  dnsResolved: boolean;
+  sslValid: boolean;
+  errorMessage: string | null;
+  checkedAt: string;
+}
+
+export interface ServiceAvailabilityStats {
+  _id: string;
+  serviceId: string;
+  period: AvailabilityPeriod;
+  uptimePercentage: number;
+  downtimeMinutes: number;
+  lastCalculatedAt: string;
+}
+
+export interface ServicePerformanceMetrics {
+  _id: string;
+  serviceId: string;
+  avgLatencyMs: number;
+  p95LatencyMs: number;
+  errorRate: number;
+  sampleSize: number;
+  calculatedAt: string;
+}
+
+export interface ProjectHealthSnapshot {
+  _id: string;
+  projectId: string;
+  status: ProjectHealthStatus;
+  reason: string | null;
+  checkedAt: string;
+}
+
+export interface MonitoringTask {
+  _id: string;
+  serviceId: string;
+  type: MonitoringTaskType;
+  intervalSeconds: number;
+  lastRunAt?: string;
+  nextRunAt: string;
+  isActive: boolean;
+}
+
+export interface SeoReport {
+  _id: string;
+  projectId: string;
+  url: string;
+  title: string | null;
+  metaDescription: string | null;
+  hasRobotsTxt: boolean;
+  hasSitemap: boolean;
+  canonicalUrl: string | null;
+  indexable: boolean;
+  checkedAt: string;
+}
+
+export interface SslReport {
+  _id: string;
+  serviceId: string;
+  issuer: string | null;
+  validFrom: string | null;
+  validTo: string | null;
+  isValid: boolean;
+  checkedAt: string;
+}
+
+export interface DnsReport {
+  _id: string;
+  serviceId: string;
+  domain: string;
+  resolved: boolean;
+  resolutionTimeMs: number | null;
+  recordType: DnsRecordType | null;
+  checkedAt: string;
+}
+
+export interface CreateServiceDTO {
+  projectId: string;
+  name: string;
+  type: ServiceType;
+  baseUrl: string;
+  probePath?: string;
+  expectedHttpStatus?: number;
+  timeoutMs?: number;
+  isCritical?: boolean;
+  isPublic?: boolean;
+  isActive?: boolean;
+}
+
+export interface UpdateServiceDTO {
+  name?: string;
+  type?: ServiceType;
+  baseUrl?: string;
+  probePath?: string;
+  expectedHttpStatus?: number;
+  timeoutMs?: number;
+  isCritical?: boolean;
+  isPublic?: boolean;
+  isActive?: boolean;
+}

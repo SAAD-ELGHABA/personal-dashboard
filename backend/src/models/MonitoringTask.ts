@@ -1,17 +1,16 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 type MonitoringTaskType = 
-  | 'UPTIME' 
-  | 'SEO' 
+  | 'HEALTH'
   | 'PERFORMANCE' 
-  | 'DNS_SSL' 
-  | 'CRAWL' 
-  | 'BACKLINKS';
+  | 'SEO' 
+  | 'SSL' 
+  | 'DNS';
 
 interface IMonitoringTask extends Document {
-  projectId: mongoose.Types.ObjectId;
+  serviceId: mongoose.Types.ObjectId;
   type: MonitoringTaskType;
-  intervalMinutes: number;
+  intervalSeconds: number;
   lastRunAt?: Date;
   nextRunAt: Date;
   isActive: boolean;
@@ -19,18 +18,18 @@ interface IMonitoringTask extends Document {
 
 const monitoringTaskSchema = new Schema<IMonitoringTask>(
   {
-    projectId: {
+    serviceId: {
       type: Schema.Types.ObjectId,
-      ref: 'Project',
+      ref: 'Service',
       required: true,
       index: true,
     },
     type: {
       type: String,
-      enum: ['UPTIME', 'SEO', 'PERFORMANCE', 'DNS_SSL', 'CRAWL', 'BACKLINKS'],
+      enum: ['HEALTH', 'PERFORMANCE', 'SEO', 'SSL', 'DNS'],
       required: true,
     },
-    intervalMinutes: {
+    intervalSeconds: {
       type: Number,
       required: true,
       min: 1,
@@ -52,7 +51,7 @@ const monitoringTaskSchema = new Schema<IMonitoringTask>(
 );
 
 // Compound indexes for efficient queries
-monitoringTaskSchema.index({ projectId: 1, type: 1 }, { unique: true });
+monitoringTaskSchema.index({ serviceId: 1, type: 1 }, { unique: true });
 monitoringTaskSchema.index({ isActive: 1, nextRunAt: 1 });
 
 const MonitoringTask = mongoose.model<IMonitoringTask>(
