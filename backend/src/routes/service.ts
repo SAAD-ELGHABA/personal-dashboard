@@ -7,6 +7,7 @@ import {
   deleteService,
   getServiceHealthHistory,
   getServicePerformanceHistory,
+  testServiceHealth,
 } from '../controllers/service';
 import { authenticate } from '../middleware/auth';
 
@@ -25,5 +26,8 @@ router.delete('/:serviceId', deleteService);
 // Service monitoring data
 router.get('/:serviceId/health-history', getServiceHealthHistory);
 router.get('/:serviceId/performance-history', getServicePerformanceHistory);
+
+// Test service health
+router.post('/:serviceId/test-health', testServiceHealth);
 
 export default router;

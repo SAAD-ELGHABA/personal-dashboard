@@ -5,6 +5,7 @@ import { ProjectCard } from '../components/ProjectCard';
 import { ProjectFormModal } from '../components/ProjectFormModal';
 import { ProjectSettingsModal } from '../components/ProjectSettingsModal';
 import { TokenDisplayModal } from '../components/TokenDisplayModal';
+import { ProjectServicesView } from '../components/ProjectServicesView';
 import { apiService } from '../services/api';
 import type { Project, ModelType, ProjectSettings } from '../types';
 
@@ -13,6 +14,9 @@ export const Projects: React.FC = () => {
   const [modelTypes, setModelTypes] = useState<ModelType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // View state
+  const [viewingProject, setViewingProject] = useState<Project | null>(null);
 
   // Modal states
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -193,6 +197,16 @@ export const Projects: React.FC = () => {
     setIsDeleteConfirmOpen(true);
   };
 
+  // If viewing a specific project's services
+  if (viewingProject) {
+    return (
+      <ProjectServicesView 
+        project={viewingProject} 
+        onBack={() => setViewingProject(null)} 
+      />
+    );
+  }
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -274,6 +288,7 @@ export const Projects: React.FC = () => {
               onDelete={openDeleteConfirm}
               onSettings={openSettingsModal}
               onViewToken={openTokenModal}
+              onViewServices={setViewingProject}
             />
           ))}
         </div>

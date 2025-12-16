@@ -7,6 +7,7 @@ import ServicePerformanceMetrics from '../models/ServicePerformanceMetrics';
 import { MonitoringTask } from '../models/MonitoringTask';
 import { Project } from '../models/Project';
 import mongoose from 'mongoose';
+import axios from 'axios';
 
 // Create a new service for a project
 export const createService = async (req: AuthRequest, res: Response) => {
@@ -27,7 +28,7 @@ export const createService = async (req: AuthRequest, res: Response) => {
     // Verify project exists and user has access
     const project = await Project.findOne({
       _id: projectId,
-      ownerId: req.user._id,
+      ownerId: req.user.userId,
     });
 
     if (!project) {
@@ -86,7 +87,7 @@ export const getProjectServices = async (req: AuthRequest, res: Response) => {
     // Verify project access
     const project = await Project.findOne({
       _id: projectId,
-      ownerId: req.user._id,
+      ownerId: req.user.userId,
     });
 
     if (!project) {
@@ -130,7 +131,7 @@ export const getServiceById = async (req: AuthRequest, res: Response) => {
     // Verify user has access to the project
     const project = await Project.findOne({
       _id: service.projectId,
-      ownerId: req.user._id,
+      ownerId: req.user.userId,
     });
 
     if (!project) {
@@ -173,7 +174,7 @@ export const updateService = async (req: AuthRequest, res: Response) => {
     // Verify user has access to the project
     const project = await Project.findOne({
       _id: service.projectId,
-      ownerId: req.user._id,
+      ownerId: req.user.userId,
     });
 
     if (!project) {
@@ -205,7 +206,7 @@ export const deleteService = async (req: AuthRequest, res: Response) => {
     // Verify user has access to the project
     const project = await Project.findOne({
       _id: service.projectId,
-      ownerId: req.user._id,
+      ownerId: req.user.userId,
     });
 
     if (!project) {
@@ -244,7 +245,7 @@ export const getServiceHealthHistory = async (req: AuthRequest, res: Response) =
     // Verify access
     const project = await Project.findOne({
       _id: service.projectId,
-      ownerId: req.user._id,
+      ownerId: req.user.userId,
     });
 
     if (!project) {
@@ -279,7 +280,7 @@ export const getServicePerformanceHistory = async (req: AuthRequest, res: Respon
     // Verify access
     const project = await Project.findOne({
       _id: service.projectId,
-      ownerId: req.user._id,
+      ownerId: req.user.userId,
     });
 
     if (!project) {
@@ -296,5 +297,132 @@ export const getServicePerformanceHistory = async (req: AuthRequest, res: Respon
     res
       .status(500)
       .json({ message: 'Error fetching performance history', error: error.message });
+  }
+};
+
+// Test service health endpoint
+export const testServiceHealth = async (req: AuthRequest, res: Response) => {
+  try {
+    const { serviceId } = req.params;
+
+    const service = await Service.findById(serviceId);
+
+    if (!service) {
+      return res.status(404).json({ message: 'Service not found' });
+    }
+
+    // Verify access
+    const project = await Project.findOne({
+      _id: service.projectId,
+      ownerId: req.user.userId,
+    });
+
+    if (!project) {
+      return res.status(404).json({ message: 'Access denied' });
+    }
+
+    // Perform health check
+    const startTime = Date.now();
+    let healthCheckResult: any = {
+      serviceId: service._id,
+      status: 'DOWN',
+      checkedAt: new Date(),
+      responseTimeMs: null,
+      httpStatus: null,
+      errorMessage: null,
+      sslValid: null,
+      sslExpiry: null,
+      dnsResolved: true,
+    };
+
+    try {
+      const testUrl = `${service.baseUrl}${service.probePath}`;
+      
+      const response = await axios.get(testUrl, {
+        timeout: service.timeoutMs,
+        validateStatus: () => true, // Don't throw on any status code
+        maxRedirects: 5,
+      });
+
+      const responseTime = Date.now() - startTime;
+      healthCheckResult.responseTimeMs = responseTime;
+      healthCheckResult.httpStatus = response.status;
+
+      // Check if status matches expected
+      if (response.status === service.expectedHttpStatus) {
+        healthCheckResult.status = 'UP';
+      } else {
+        healthCheckResult.status = 'DEGRADED';
+        healthCheckResult.errorMessage = `Expected status ${service.expectedHttpStatus}, got ${response.status}`;
+      }
+
+      // SSL check for HTTPS
+      if (service.baseUrl.startsWith('https://')) {
+        try {
+          const { default: https } = await import('https');
+          const { URL } = await import('url');
+          const parsedUrl = new URL(service.baseUrl);
+
+          await new Promise((resolve, reject) => {
+            const req = https.request(
+              {
+                hostname: parsedUrl.hostname,
+                port: 443,
+                path: '/',
+                method: 'HEAD',
+                rejectUnauthorized: false,
+              },
+              (res) => {
+                const cert = (res.socket as any).getPeerCertificate();
+                if (cert && cert.valid_to) {
+                  healthCheckResult.sslValid = new Date() < new Date(cert.valid_to);
+                  healthCheckResult.sslExpiry = new Date(cert.valid_to);
+                }
+                resolve(true);
+              }
+            );
+            req.on('error', reject);
+            req.end();
+          });
+        } catch (sslError) {
+          healthCheckResult.sslValid = false;
+        }
+      }
+    } catch (error: any) {
+      const responseTime = Date.now() - startTime;
+      healthCheckResult.responseTimeMs = responseTime;
+      healthCheckResult.status = 'DOWN';
+      
+      if (error.code === 'ECONNREFUSED') {
+        healthCheckResult.errorMessage = 'Connection refused - service may be offline';
+      } else if (error.code === 'ETIMEDOUT' || error.code === 'ECONNABORTED') {
+        healthCheckResult.errorMessage = `Request timeout after ${service.timeoutMs}ms`;
+      } else if (error.code === 'ENOTFOUND') {
+        healthCheckResult.errorMessage = 'DNS resolution failed - domain not found';
+        healthCheckResult.dnsResolved = false;
+      } else {
+        healthCheckResult.errorMessage = error.message || 'Unknown error occurred';
+      }
+    }
+
+    // Save the health check result
+    const healthCheck = new ServiceHealthCheck(healthCheckResult);
+    await healthCheck.save();
+
+    res.json({
+      success: true,
+      data: healthCheckResult,
+      testInfo: {
+        testedAt: new Date(),
+        testUrl: `${service.baseUrl}${service.probePath}`,
+        expectedStatus: service.expectedHttpStatus,
+        timeout: service.timeoutMs,
+      },
+    });
+  } catch (error: any) {
+    console.error('Error testing service health:', error);
+    res
+      .status(500)
+      .json({ message: 'Error testing service health', error: error.message });
   }
 };

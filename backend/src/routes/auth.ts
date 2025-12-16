@@ -5,6 +5,7 @@ import * as authController from '../controllers/auth';
 
 export const authRouter = Router();
 
+
 // Login user
 authRouter.post(
   '/login',

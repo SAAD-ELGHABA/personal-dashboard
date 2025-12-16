@@ -12,6 +12,7 @@ import { AiModels } from './pages/AiModels';
 import { ModelTypes } from './pages/ModelTypes';
 import { Projects } from './pages/Projects';
 import { MyBlogs } from './pages/MyBlogs';
+import { ServiceDetails } from './pages/ServiceDetails';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { token, isLoading } = useAuth();
@@ -120,6 +121,17 @@ function App() {
               <ProtectedRoute>
                 <DashboardLayout>
                   <ModelTypes />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/projects/:projectId/services/:serviceId"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <ServiceDetails />
                 </DashboardLayout>
               </ProtectedRoute>
             }

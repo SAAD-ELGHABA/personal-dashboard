@@ -11,6 +11,7 @@ interface ProjectCardProps {
   onDelete: (project: Project) => void;
   onSettings: (project: Project) => void;
   onViewToken: (project: Project) => void;
+  onViewServices?: (project: Project) => void;
 }
 
 export const ProjectCard: React.FC<ProjectCardProps> = ({
@@ -20,6 +21,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   onDelete,
   onSettings,
   onViewToken,
+  onViewServices,
 }) => {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -110,6 +112,15 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
 
         {/* Actions */}
         <div className="flex flex-wrap gap-2 pt-2">
+          {onViewServices && (
+            <Button 
+              size="sm" 
+              variant="default" 
+              onClick={() => onViewServices(project)}
+            >
+              Manage Services
+            </Button>
+          )}
           <Button size="sm" variant="outline" onClick={() => onEdit(project)}>
             Edit
           </Button>

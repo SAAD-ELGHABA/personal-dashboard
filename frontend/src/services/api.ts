@@ -12,7 +12,12 @@ import type {
   ModelStatistics,
   CreateProjectDTO,
   UpdateProjectDTO,
-  UpdateProjectSettingsDTO
+  UpdateProjectSettingsDTO,
+  Service,
+  CreateServiceDTO,
+  UpdateServiceDTO,
+  ServiceHealthCheck,
+  ServicePerformanceMetrics
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -296,6 +301,58 @@ class ApiService {
     message: string 
   }> {
     const response = await this.api.post('/api/model-types/reorder', { orders });
+    return response.data;
+  }
+
+  // Service Management endpoints
+  async createService(data: CreateServiceDTO): Promise<Service> {
+    const response = await this.api.post('/api/services', data);
+    return response.data;
+  }
+
+  async getProjectServices(projectId: string): Promise<Service[]> {
+    const response = await this.api.get(`/api/services/project/${projectId}`);
+    return response.data;
+  }
+
+  async getServiceById(serviceId: string): Promise<Service & {
+    availabilityStats?: any[];
+    latestPerformance?: ServicePerformanceMetrics;
+  }> {
+    const response = await this.api.get(`/api/services/${serviceId}`);
+    return response.data;
+  }
+
+  async getService(serviceId: string): Promise<Service & {
+    availabilityStats?: any[];
+    latestPerformance?: ServicePerformanceMetrics;
+  }> {
+    const response = await this.api.get(`/api/services/${serviceId}`);
+    return response.data;
+  }
+
+  async updateService(serviceId: string, data: UpdateServiceDTO): Promise<Service> {
+    const response = await this.api.put(`/api/services/${serviceId}`, data);
+    return response.data;
+  }
+
+  async deleteService(serviceId: string): Promise<{ message: string }> {
+    const response = await this.api.delete(`/api/services/${serviceId}`);
+    return response.data;
+  }
+
+  async getServiceHealthHistory(serviceId: string, limit: number = 100): Promise<ServiceHealthCheck[]> {
+    const response = await this.api.get(`/api/services/${serviceId}/health-history?limit=${limit}`);
+    return response.data;
+  }
+
+  async getServicePerformanceHistory(serviceId: string, limit: number = 100): Promise<ServicePerformanceMetrics[]> {
+    const response = await this.api.get(`/api/services/${serviceId}/performance-history?limit=${limit}`);
+    return response.data;
+  }
+
+  async testServiceHealth(serviceId: string): Promise<any> {
+    const response = await this.api.post(`/api/services/${serviceId}/test-health`);
     return response.data;
   }
 }

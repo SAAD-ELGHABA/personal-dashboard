@@ -10,10 +10,10 @@ interface ProjectFormModalProps {
   onClose: () => void;
   onSubmit: (data: {
     name: string;
-    url: string;
+    url?: string;
     description: string;
     modelTypesAllowed: string[];
-    maxRequestSize: number;
+    maxRequestSize?: number;
   }) => void;
   modelTypes: ModelType[];
   project?: Project | null;
@@ -96,10 +96,20 @@ export const ProjectFormModal: React.FC<ProjectFormModalProps> = ({
       return;
     }
 
-    onSubmit({
-      ...formData,
-      maxRequestSize: Math.round(formData.maxRequestSize * 1024 * 1024), // Convert MB to bytes
-    });
+    // For edit, don't send URL and maxRequestSize
+    const submitData: any = {
+      name: formData.name,
+      description: formData.description,
+      modelTypesAllowed: formData.modelTypesAllowed,
+    };
+
+    // Only include these for create
+    if (!project) {
+      submitData.url = formData.url;
+      submitData.maxRequestSize = Math.round(formData.maxRequestSize * 1024 * 1024); // Convert MB to bytes
+    }
+
+    onSubmit(submitData);
   };
 
   const toggleModelType = (modelTypeId: string) => {
