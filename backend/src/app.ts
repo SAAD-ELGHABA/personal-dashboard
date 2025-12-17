@@ -5,21 +5,42 @@ import morgan from 'morgan';
 import { errorHandler } from './middleware/errorHandler';
 import { authRouter } from './routes/auth';
 import { apiRouter } from './routes/api';
+import { brainRouter } from './routes/brain';
 import { config } from './config';
 
 const app = express();
 
 // Middleware
 app.use(helmet());
-app.use(cors(
-  { origin: config.corsOrigin || '*', }
-));
+
+// const allowedOrigins = config.corsOrigin 
+//   ? config.corsOrigin.split(',').map(origin => origin.trim())
+//   : ['http://localhost:5173', 'http://localhost:3000'];
+
+// app.use(cors({
+//   origin: (origin, callback) => {
+//     // Allow requests with no origin (like mobile apps or curl requests)
+//     if (!origin) return callback(null, true);
+    
+//     if (allowedOrigins.indexOf(origin) !== -1 || allowedOrigins.includes('*')) {
+//       callback(null, true);
+//     } else {
+//       callback(new Error('Not allowed by CORS'));
+//     }
+//   },
+//   credentials: true,
+// }));
+app.use(cors({
+  origin: '*',
+  credentials: true,
+}));
 app.use(express.json());
 app.use(morgan('dev'));
 
 // Routes
 app.use('/api/auth', authRouter);
 app.use('/api', apiRouter);
+app.use('/brain', brainRouter);
 
 // Error handling
 app.use(errorHandler);

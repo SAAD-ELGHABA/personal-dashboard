@@ -1,0 +1,360 @@
+{
+  "info": {
+    "name": "Brain API - Service Prompts & Model Execution",
+    "description": "Collection for testing Brain API features including service prompts and AI model execution",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Project Management",
+      "item": [
+        {
+          "name": "Regenerate Project Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/projects/:projectId/regenerate-token",
+              "host": ["{{base_url}}"],
+              "path": ["api", "projects", ":projectId", "regenerate-token"],
+              "variable": [
+                {
+                  "key": "projectId",
+                  "value": "64f1b2c3d4e5f6a7b8c9d0e1"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Service Prompts",
+      "item": [
+        {
+          "name": "Create Service Prompt",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"modelTypeId\": \"64f1b2c3d4e5f6a7b8c9d0e1\",\n  \"name\": \"Customer Support Chatbot\",\n  \"promptText\": \"You are a helpful customer support assistant for our e-commerce platform. Answer the following customer question professionally and friendly: {{input}}\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/services/:serviceId/prompts",
+              "host": ["{{base_url}}"],
+              "path": ["api", "services", ":serviceId", "prompts"],
+              "variable": [
+                {
+                  "key": "serviceId",
+                  "value": "64f1b2c3d4e5f6a7b8c9d0e3"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Service Prompts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/services/:serviceId/prompts?modelTypeId=",
+              "host": ["{{base_url}}"],
+              "path": ["api", "services", ":serviceId", "prompts"],
+              "query": [
+                {
+                  "key": "modelTypeId",
+                  "value": "",
+                  "description": "Optional: Filter by model type"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "serviceId",
+                  "value": "64f1b2c3d4e5f6a7b8c9d0e3"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Prompt by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/services/prompts/:promptId",
+              "host": ["{{base_url}}"],
+              "path": ["api", "services", "prompts", ":promptId"],
+              "variable": [
+                {
+                  "key": "promptId",
+                  "value": "64f1b2c3d4e5f6a7b8c9d0e2"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Service Prompt",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Prompt Name\",\n  \"promptText\": \"Updated prompt: {{input}}\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/services/prompts/:promptId",
+              "host": ["{{base_url}}"],
+              "path": ["api", "services", "prompts", ":promptId"],
+              "variable": [
+                {
+                  "key": "promptId",
+                  "value": "64f1b2c3d4e5f6a7b8c9d0e2"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Set Prompt as Active",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/services/prompts/:promptId/set-active",
+              "host": ["{{base_url}}"],
+              "path": ["api", "services", "prompts", ":promptId", "set-active"],
+              "variable": [
+                {
+                  "key": "promptId",
+                  "value": "64f1b2c3d4e5f6a7b8c9d0e2"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Service Prompt",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/services/prompts/:promptId",
+              "host": ["{{base_url}}"],
+              "path": ["api", "services", "prompts", ":promptId"],
+              "variable": [
+                {
+                  "key": "promptId",
+                  "value": "64f1b2c3d4e5f6a7b8c9d0e2"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Brain API - Model Execution",
+      "item": [
+        {
+          "name": "Run AI Model (Basic)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{project_api_token}}",
+                "type": "text",
+                "description": "Project API token (sk_proj_xxxx)"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"modelType\": \"chatbot\",\n  \"serviceId\": \"64f1b2c3d4e5f6a7b8c9d0e3\",\n  \"input\": \"Where is my order?\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/brain/v1/run",
+              "host": ["{{base_url}}"],
+              "path": ["brain", "v1", "run"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Run AI Model (With Options)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{project_api_token}}",
+                "type": "text",
+                "description": "Project API token (sk_proj_xxxx)"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"modelType\": \"chatbot\",\n  \"serviceId\": \"64f1b2c3d4e5f6a7b8c9d0e3\",\n  \"input\": \"How do I return an item?\",\n  \"options\": {\n    \"temperature\": 0.7,\n    \"maxTokens\": 500,\n    \"companyName\": \"Acme Corp\",\n    \"userName\": \"John Doe\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/brain/v1/run",
+              "host": ["{{base_url}}"],
+              "path": ["brain", "v1", "run"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Run AI Model (Translation)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{project_api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"modelType\": \"translation\",\n  \"serviceId\": \"64f1b2c3d4e5f6a7b8c9d0e3\",\n  \"input\": \"Hello, how are you?\",\n  \"options\": {\n    \"targetLanguage\": \"Spanish\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/brain/v1/run",
+              "host": ["{{base_url}}"],
+              "path": ["brain", "v1", "run"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Run AI Model (Summarization)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{project_api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"modelType\": \"summarization\",\n  \"serviceId\": \"64f1b2c3d4e5f6a7b8c9d0e3\",\n  \"input\": \"Long article text here...\",\n  \"options\": {\n    \"maxTokens\": 150,\n    \"style\": \"bullet points\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/brain/v1/run",
+              "host": ["{{base_url}}"],
+              "path": ["brain", "v1", "run"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "your_jwt_token_here",
+      "type": "string"
+    },
+    {
+      "key": "project_api_token",
+      "value": "sk_proj_your_project_token_here",
+      "type": "string"
+    }
+  ]
+}

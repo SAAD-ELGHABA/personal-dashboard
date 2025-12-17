@@ -5,6 +5,7 @@ import { ProjectCard } from '../components/ProjectCard';
 import { ProjectFormModal } from '../components/ProjectFormModal';
 import { ProjectSettingsModal } from '../components/ProjectSettingsModal';
 import { TokenDisplayModal } from '../components/TokenDisplayModal';
+import { TokenRegenerateModal } from '../components/TokenRegenerateModal';
 import { ProjectServicesView } from '../components/ProjectServicesView';
 import { apiService } from '../services/api';
 import type { Project, ModelType, ProjectSettings } from '../types';
@@ -23,6 +24,7 @@ export const Projects: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isTokenModalOpen, setIsTokenModalOpen] = useState(false);
+  const [isRegenerateTokenModalOpen, setIsRegenerateTokenModalOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
   // Selected project states
@@ -148,25 +150,24 @@ export const Projects: React.FC = () => {
   };
 
   const handleRegenerateToken = async () => {
-    if (!selectedProject) return;
-
-    const confirmed = window.confirm(
-      'Are you sure you want to regenerate the API token? The old token will be invalidated immediately.'
-    );
-
-    if (!confirmed) return;
+    if (!selectedProject) return '';
 
     try {
       setIsRegenerating(true);
-      const response = await apiService.regenerateApiToken(selectedProject._id);
-      setCurrentToken(response.data.apiToken);
-      alert('Token regenerated successfully!');
+      const response = await apiService.regenerateProjectToken(selectedProject._id);
+      return response.data.apiToken;
     } catch (err: any) {
       alert(err.response?.data?.message || 'Failed to regenerate token');
       console.error('Error regenerating token:', err);
+      throw err;
     } finally {
       setIsRegenerating(false);
     }
+  };
+
+  const openRegenerateTokenModal = (project: Project) => {
+    setSelectedProject(project);
+    setIsRegenerateTokenModalOpen(true);
   };
 
   const openEditModal = (project: Project) => {
@@ -288,6 +289,7 @@ export const Projects: React.FC = () => {
               onDelete={openDeleteConfirm}
               onSettings={openSettingsModal}
               onViewToken={openTokenModal}
+              onRegenerateToken={openRegenerateTokenModal}
               onViewServices={setViewingProject}
             />
           ))}
@@ -345,6 +347,19 @@ export const Projects: React.FC = () => {
             currentToken.includes('•') ? undefined : handleRegenerateToken
           }
           isRegenerating={isRegenerating}
+        />
+      )}
+
+      {/* Token Regenerate Modal */}
+      {selectedProject && (
+        <TokenRegenerateModal
+          isOpen={isRegenerateTokenModalOpen}
+          onClose={() => {
+            setIsRegenerateTokenModalOpen(false);
+            setSelectedProject(null);
+          }}
+          onConfirm={handleRegenerateToken}
+          projectName={selectedProject.name}
         />
       )}
 

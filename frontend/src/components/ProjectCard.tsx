@@ -11,6 +11,7 @@ interface ProjectCardProps {
   onDelete: (project: Project) => void;
   onSettings: (project: Project) => void;
   onViewToken: (project: Project) => void;
+  onRegenerateToken: (project: Project) => void;
   onViewServices?: (project: Project) => void;
 }
 
@@ -21,6 +22,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   onDelete,
   onSettings,
   onViewToken,
+  onRegenerateToken,
   onViewServices,
 }) => {
   const formatDate = (dateString: string) => {
@@ -137,6 +139,14 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             onClick={() => onViewToken(project)}
           >
             View Token
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onRegenerateToken(project)}
+            className="text-yellow-600 hover:text-yellow-700"
+          >
+            Regenerate Token
           </Button>
           <Button
             size="sm"

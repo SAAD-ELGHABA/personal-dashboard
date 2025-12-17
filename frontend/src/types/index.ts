@@ -337,3 +337,37 @@ export interface UpdateServiceDTO {
   isPublic?: boolean;
   isActive?: boolean;
 }
+
+// Service Prompt Types
+export interface ServicePrompt {
+  _id: string;
+  serviceId: string | {
+    _id: string;
+    name: string;
+    type: ServiceType;
+  };
+  modelTypeId: string | {
+    _id: string;
+    key: string;
+    name: string;
+    description?: string;
+  };
+  name: string;
+  promptText: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateServicePromptDTO {
+  modelTypeId: string;
+  name: string;
+  promptText: string;
+  isActive?: boolean;
+}
+
+export interface UpdateServicePromptDTO {
+  name?: string;
+  promptText?: string;
+  isActive?: boolean;
+}

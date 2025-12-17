@@ -9,6 +9,14 @@ import {
   getServicePerformanceHistory,
   testServiceHealth,
 } from '../controllers/service';
+import {
+  createServicePrompt,
+  getServicePrompts,
+  getServicePromptById,
+  updateServicePrompt,
+  setActivePrompt,
+  deleteServicePrompt,
+} from '../controllers/servicePrompt';
 import { authenticate } from '../middleware/auth';
 
 const router = express.Router();
@@ -29,5 +37,13 @@ router.get('/:serviceId/performance-history', getServicePerformanceHistory);
 
 // Test service health
 router.post('/:serviceId/test-health', testServiceHealth);
+
+// Service prompts management
+router.post('/:serviceId/prompts', createServicePrompt);
+router.get('/:serviceId/prompts', getServicePrompts);
+router.get('/prompts/:promptId', getServicePromptById);
+router.put('/prompts/:promptId', updateServicePrompt);
+router.post('/prompts/:promptId/set-active', setActivePrompt);
+router.delete('/prompts/:promptId', deleteServicePrompt);
 
 export default router;

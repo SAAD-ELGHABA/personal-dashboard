@@ -17,7 +17,10 @@ import type {
   CreateServiceDTO,
   UpdateServiceDTO,
   ServiceHealthCheck,
-  ServicePerformanceMetrics
+  ServicePerformanceMetrics,
+  ServicePrompt,
+  CreateServicePromptDTO,
+  UpdateServicePromptDTO
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -353,6 +356,71 @@ class ApiService {
 
   async testServiceHealth(serviceId: string): Promise<any> {
     const response = await this.api.post(`/api/services/${serviceId}/test-health`);
+    return response.data;
+  }
+
+  // Service Prompts Management endpoints
+  async createServicePrompt(serviceId: string, data: CreateServicePromptDTO): Promise<{
+    success: boolean;
+    data: { prompt: ServicePrompt };
+    message: string;
+  }> {
+    const response = await this.api.post(`/api/services/${serviceId}/prompts`, data);
+    return response.data;
+  }
+
+  async getServicePrompts(serviceId: string, modelTypeId?: string): Promise<{
+    success: boolean;
+    data: { prompts: ServicePrompt[] };
+  }> {
+    const url = modelTypeId 
+      ? `/api/services/${serviceId}/prompts?modelTypeId=${modelTypeId}`
+      : `/api/services/${serviceId}/prompts`;
+    const response = await this.api.get(url);
+    return response.data;
+  }
+
+  async getServicePromptById(promptId: string): Promise<{
+    success: boolean;
+    data: { prompt: ServicePrompt };
+  }> {
+    const response = await this.api.get(`/api/services/prompts/${promptId}`);
+    return response.data;
+  }
+
+  async updateServicePrompt(promptId: string, data: UpdateServicePromptDTO): Promise<{
+    success: boolean;
+    data: { prompt: ServicePrompt };
+    message: string;
+  }> {
+    const response = await this.api.put(`/api/services/prompts/${promptId}`, data);
+    return response.data;
+  }
+
+  async setActivePrompt(promptId: string): Promise<{
+    success: boolean;
+    data: { prompt: ServicePrompt };
+    message: string;
+  }> {
+    const response = await this.api.post(`/api/services/prompts/${promptId}/set-active`);
+    return response.data;
+  }
+
+  async deleteServicePrompt(promptId: string): Promise<{
+    success: boolean;
+    message: string;
+  }> {
+    const response = await this.api.delete(`/api/services/prompts/${promptId}`);
+    return response.data;
+  }
+
+  // Project Token Management
+  async regenerateProjectToken(projectId: string): Promise<{
+    success: boolean;
+    data: { apiToken: string };
+    message: string;
+  }> {
+    const response = await this.api.post(`/api/projects/${projectId}/regenerate-token`);
     return response.data;
   }
 }

@@ -17,6 +17,7 @@ export * from './MonitoringTask';
 
 // Services & Monitoring
 export * from './Service';
+export * from './ServicePrompt';
 export * from './ServiceHealthCheck';
 export * from './ServiceAvailabilityStats';
 export * from './ServicePerformanceMetrics';

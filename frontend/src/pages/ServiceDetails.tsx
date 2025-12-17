@@ -8,11 +8,13 @@ import {
   CheckCircle,
   XCircle,
   TrendingUp,
+  MessageSquare,
 } from 'lucide-react';
 import { apiService } from '../services/api';
 import { ServiceHealthTestModal } from '../components/ServiceHealthTestModal';
+import { ServicePrompts } from '../components/ServicePrompts';
 import { Button } from '../components/ui/Button';
-import type { ServiceHealthCheck, ServicePerformanceMetrics, ServiceHealthStatus } from '../types';
+import type { ServiceHealthCheck, ServicePerformanceMetrics, ServiceHealthStatus, ModelType } from '../types';
 import {
   BarChart,
   Bar,
@@ -55,6 +57,8 @@ export const ServiceDetails = () => {
   const [healthHistory, setHealthHistory] = useState<ServiceHealthCheck[]>([]);
   const [, setPerformanceHistory] = useState<ServicePerformanceMetrics[]>([]);
   const [loading, setLoading] = useState(true);
+  const [modelTypes, setModelTypes] = useState<ModelType[]>([]);
+  const [activeTab, setActiveTab] = useState<'monitoring' | 'prompts'>('monitoring');
   
   // Custom health test state
   const [isCustomTestModalOpen, setIsCustomTestModalOpen] = useState(false);
@@ -66,9 +70,19 @@ export const ServiceDetails = () => {
 
   useEffect(() => {
     loadServiceDetails();
+    loadModelTypes();
     const interval = setInterval(loadServiceDetails, 30000); // Refresh every 30s
     return () => clearInterval(interval);
   }, [serviceId]);
+
+  const loadModelTypes = async () => {
+    try {
+      const response = await apiService.getModelTypes();
+      setModelTypes(response.data.modelTypes);
+    } catch (error) {
+      console.error('Failed to load model types:', error);
+    }
+  };
 
   const loadServiceDetails = async () => {
     if (!serviceId) return;
@@ -213,77 +227,108 @@ export const ServiceDetails = () => {
           </div>
         </div>
 
-        {/* Service Info Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-card border border-border rounded-lg p-6">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-muted-foreground">Uptime</p>
-              <TrendingUp className="w-5 h-5 text-green-600" />
-            </div>
-            <p className="text-3xl font-bold">{uptimePercentage}%</p>
-            <p className="text-xs text-muted-foreground mt-1">Last 50 checks</p>
-          </div>
-
-          <div className="bg-card border border-border rounded-lg p-6">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-muted-foreground">Avg Response Time</p>
-              <Clock className="w-5 h-5 text-primary" />
-            </div>
-            <p className="text-3xl font-bold">
-              {healthHistory.length > 0
-                ? `${Math.round(
-                    healthHistory.reduce((sum, h) => sum + (h.responseTimeMs || 0), 0) /
-                      healthHistory.length
-                  )}ms`
-                : 'N/A'}
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">Average latency</p>
-          </div>
-
-          <div className="bg-card border border-border rounded-lg p-6">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-muted-foreground">Total Checks</p>
-              <Activity className="w-5 h-5 text-primary" />
-            </div>
-            <p className="text-3xl font-bold">{healthHistory.length}</p>
-            <p className="text-xs text-muted-foreground mt-1">Health checks performed</p>
-          </div>
-
-          <div className="bg-card border border-border rounded-lg p-6">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-muted-foreground">Last Checked</p>
-              <Clock className="w-5 h-5 text-muted-foreground" />
-            </div>
-            <p className="text-lg font-semibold">
-              {service.latestHealth ? formatDate(service.latestHealth.checkedAt) : 'Never'}
-            </p>
-          </div>
+        {/* Tabs Navigation */}
+        <div className="border-b border-border">
+          <nav className="flex space-x-8">
+            <button
+              onClick={() => setActiveTab('monitoring')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === 'monitoring'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-gray-300'
+              }`}
+            >
+              <Activity className="w-4 h-4 inline mr-2" />
+              Monitoring & Health
+            </button>
+            <button
+              onClick={() => setActiveTab('prompts')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === 'prompts'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-gray-300'
+              }`}
+            >
+              <MessageSquare className="w-4 h-4 inline mr-2" />
+              AI Prompts
+            </button>
+          </nav>
         </div>
 
-        {/* Custom Health Test Section */}
-        <div className="bg-card border border-border rounded-lg p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-xl font-bold">Custom Health Check</h2>
-              <p className="text-sm text-muted-foreground">Test a specific endpoint path</p>
-            </div>
-            <Button
-              onClick={() => setShowCustomTestForm(!showCustomTestForm)}
-              variant="default"
-            >
-              <Activity className="w-4 h-4 mr-2" />
-              Test Custom Path
-            </Button>
-          </div>
+        {/* Tab Content */}
+        {activeTab === 'monitoring' ? (
+          <>
+            {/* Service Info Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-card border border-border rounded-lg p-6">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm text-muted-foreground">Uptime</p>
+                  <TrendingUp className="w-5 h-5 text-green-600" />
+                </div>
+                <p className="text-3xl font-bold">{uptimePercentage}%</p>
+                <p className="text-xs text-muted-foreground mt-1">Last 50 checks</p>
+              </div>
 
-          {showCustomTestForm && (
-            <div className="mt-4 p-4 bg-muted rounded-lg">
-              <label className="block text-sm font-medium mb-2">
-                Endpoint Path *
-              </label>
-              <div className="flex space-x-3">
-                <input
-                  type="text"
+              <div className="bg-card border border-border rounded-lg p-6">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm text-muted-foreground">Avg Response Time</p>
+                  <Clock className="w-5 h-5 text-primary" />
+                </div>
+                <p className="text-3xl font-bold">
+                  {healthHistory.length > 0
+                    ? `${Math.round(
+                        healthHistory.reduce((sum, h) => sum + (h.responseTimeMs || 0), 0) /
+                          healthHistory.length
+                      )}ms`
+                    : 'N/A'}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">Average latency</p>
+              </div>
+
+              <div className="bg-card border border-border rounded-lg p-6">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm text-muted-foreground">Total Checks</p>
+                  <Activity className="w-5 h-5 text-primary" />
+                </div>
+                <p className="text-3xl font-bold">{healthHistory.length}</p>
+                <p className="text-xs text-muted-foreground mt-1">Health checks performed</p>
+              </div>
+
+              <div className="bg-card border border-border rounded-lg p-6">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm text-muted-foreground">Last Checked</p>
+                  <Clock className="w-5 h-5 text-muted-foreground" />
+                </div>
+                <p className="text-lg font-semibold">
+                  {service.latestHealth ? formatDate(service.latestHealth.checkedAt) : 'Never'}
+                </p>
+              </div>
+            </div>
+
+            {/* Custom Health Test Section */}
+            <div className="bg-card border border-border rounded-lg p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-xl font-bold">Custom Health Check</h2>
+                  <p className="text-sm text-muted-foreground">Test a specific endpoint path</p>
+                </div>
+                <Button
+                  onClick={() => setShowCustomTestForm(!showCustomTestForm)}
+                  variant="default"
+                >
+                  <Activity className="w-4 h-4 mr-2" />
+                  Test Custom Path
+                </Button>
+              </div>
+
+              {showCustomTestForm && (
+                <div className="mt-4 p-4 bg-muted rounded-lg">
+                  <label className="block text-sm font-medium mb-2">
+                    Endpoint Path *
+                  </label>
+                  <div className="flex space-x-3">
+                    <input
+                      type="text"
                   value={customPath}
                   onChange={(e) => setCustomPath(e.target.value)}
                   className="flex-1 px-4 py-2 border border-input bg-background rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
@@ -467,6 +512,13 @@ export const ServiceDetails = () => {
             </table>
           </div>
         </div>
+          </>
+        ) : (
+          /* Prompts Tab Content */
+          <div className="bg-card border border-border rounded-lg p-6">
+            <ServicePrompts serviceId={serviceId!} modelTypes={modelTypes} />
+          </div>
+        )}
       </div>
 
       {/* Custom Test Result Modal */}
