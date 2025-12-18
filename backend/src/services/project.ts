@@ -403,20 +403,42 @@ class ProjectService {
       throw new ApiError(404, 'Project settings not found');
     }
 
+    console.log('Raw settings from database:', {
+      projectId: settings.projectId,
+      allowedModelTypes: settings.allowedModelTypes,
+      isActive: settings.isActive,
+      settingsId: settings._id
+    });
+
     if (!settings.isActive) {
       throw new ApiError(403, 'Project is currently inactive');
     }
 
     // Validate model type if provided
     if (modelTypeKey) {
-      const allowedKeys = (settings.allowedModelTypes as any[]).map(
-        (mt) => mt.key
-      );
-      if (!allowedKeys.includes(modelTypeKey)) {
-        throw new ApiError(403, 'Model type not allowed for this project');
+      // If no allowedModelTypes specified, allow all
+      const allowedModelTypes = settings.allowedModelTypes as any[];
+      
+      console.log('Validating model type:', {
+        modelTypeKey,
+        allowedModelTypes,
+        hasAllowedModelTypes: !!allowedModelTypes,
+        length: allowedModelTypes?.length,
+        isArray: Array.isArray(allowedModelTypes)
+      });
+      
+      if (allowedModelTypes && allowedModelTypes.length > 0) {
+        const allowedKeys = allowedModelTypes.map((mt) => mt.key);
+        console.log('Allowed keys:', allowedKeys);
+        if (!allowedKeys.includes(modelTypeKey)) {
+          throw new ApiError(403, 'Model type not allowed for this project');
+        }
+      } else {
+        console.log('No allowedModelTypes restriction - allowing all model types');
       }
+      // If allowedModelTypes is empty or undefined, all model types are allowed
     }
-
+    
     // Update last used timestamp
     await ApiToken.updateOne(
       { _id: tokenDoc._id },

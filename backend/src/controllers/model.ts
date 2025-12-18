@@ -109,7 +109,7 @@ export const createModel = async (
       tags,
       metadata,
       projectsAssigned,
-      isPublic,
+      isPublic: true,
       requiresApproval,
     });
 

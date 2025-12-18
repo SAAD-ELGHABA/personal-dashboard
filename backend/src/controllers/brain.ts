@@ -76,7 +76,7 @@ export const runBrainModel = async (
 
     // Find service by URL and project
     const service = await Service.findOne({
-      url: serviceUrl,
+      baseUrl: serviceUrl,
       projectId: req.projectId,
       isActive: true,
     });
@@ -98,6 +98,12 @@ export const runBrainModel = async (
       throw new ApiError(404, `Model type '${modelType}' not found or inactive`);
     }
 
+    console.log('Found model type:', {
+      id: modelTypeDoc._id,
+      key: modelTypeDoc.key,
+      name: modelTypeDoc.name
+    });
+
     // Validate project has access to this model type
     const token = req.headers.authorization!.substring(7);
     const actualToken = token.startsWith('sk_proj_') ? token.substring(8) : token;
@@ -106,6 +112,11 @@ export const runBrainModel = async (
       actualToken,
       modelType
     );
+
+    console.log('Project validated:', {
+      id: project._id,
+      name: project.name
+    });
 
     // Get active prompt for this service and model type
     const activePrompt = await ServicePrompt.findOne({
@@ -121,7 +132,19 @@ export const runBrainModel = async (
       );
     }
 
+    console.log('Found active prompt:', {
+      id: activePrompt._id,
+      name: activePrompt.name,
+      promptLength: activePrompt.promptText.length
+    });
+
     // Get an available model of this type
+    console.log('Looking for model with criteria:', {
+      typeId: modelTypeDoc._id,
+      status: 'active',
+      projectId: project._id
+    });
+
     const model = await Model.findOne({
       typeId: modelTypeDoc._id,
       status: 'active',
@@ -133,10 +156,18 @@ export const runBrainModel = async (
       .select('+apiKey +encryptionIV')
       .sort({ priority: -1, weight: -1 });
 
+    console.log('Model lookup result:', {
+      found: !!model,
+      modelName: model?.name,
+      modelVersion: model?.version,
+      modelProvider: model?.provider,
+      modelEndpoint: model?.endpoint
+    });
+
     if (!model) {
       throw new ApiError(
         503,
-        `No available model found for type '${modelType}'`
+        `No available model found for type '${modelType}'. Please configure a model in the dashboard.`
       );
     }
 
@@ -202,7 +233,20 @@ async function executeModel(
   options?: any
 ): Promise<any> {
   try {
+    // Validate model has required fields
+    if (!model.endpoint) {
+      throw new ApiError(500, 'Model endpoint is not configured');
+    }
+    
+    if (!model.version) {
+      throw new ApiError(500, `Model version is not configured for model '${model.name}'`);
+    }
+
     const decryptedApiKey = model.decryptApiKey();
+
+    if (!decryptedApiKey) {
+      throw new ApiError(500, 'Model API key is not configured or could not be decrypted');
+    }
 
     // Build request based on provider
     let requestData: any;
@@ -241,7 +285,51 @@ async function executeModel(
         };
         break;
 
+      case 'google':
+        // Google AI (Gemini) API format
+        headers['x-goog-api-key'] = decryptedApiKey;
+        requestData = {
+          contents: [
+            {
+              parts: [
+                {
+                  text: prompt,
+                },
+              ],
+            },
+          ],
+          generationConfig: {
+            temperature: options?.temperature || 0.7,
+            maxOutputTokens: options?.maxTokens || 1000,
+          },
+        };
+        break;
+
       case 'custom':
+        // For custom models, check if endpoint suggests OpenAI compatibility
+        if (model.endpoint.includes('openrouter.ai') || model.endpoint.includes('chat/completions')) {
+          // Use OpenAI-compatible format
+          headers['Authorization'] = `Bearer ${decryptedApiKey}`;
+          requestData = {
+            model: model.name, // Use model name as the model identifier
+            messages: [
+              {
+                role: 'user',
+                content: prompt,
+              },
+            ],
+            temperature: options?.temperature || 0.7,
+            max_tokens: options?.maxTokens || 1000,
+          };
+        } else {
+          // Generic custom format
+          headers['Authorization'] = `Bearer ${decryptedApiKey}`;
+          requestData = {
+            prompt,
+            ...options,
+          };
+        }
+        break;
       case 'local':
         // For custom/local models, assume a generic format
         headers['Authorization'] = `Bearer ${decryptedApiKey}`;
@@ -254,6 +342,14 @@ async function executeModel(
       default:
         throw new ApiError(400, `Unsupported model provider: ${model.provider}`);
     }
+
+    console.log('Executing model:', {
+      name: model.name,
+      provider: model.provider,
+      endpoint: model.endpoint,
+      version: model.version,
+      requestData: { ...requestData, prompt: prompt.substring(0, 100) + '...' }
+    });
 
     // Make the API call
     const response = await axios.post(model.endpoint, requestData, {
@@ -278,7 +374,26 @@ async function executeModel(
         };
         break;
 
+      case 'google':
+        // Parse Google AI (Gemini) response
+        result = {
+          text: response.data.candidates[0].content.parts[0].text,
+          usage: response.data.usageMetadata,
+        };
+        break;
+
       case 'custom':
+        // Check if response is OpenAI-compatible
+        if (response.data.choices && response.data.choices[0]?.message?.content) {
+          result = {
+            text: response.data.choices[0].message.content,
+            usage: response.data.usage,
+          };
+        } else {
+          result = response.data;
+        }
+        break;
+      
       case 'local':
         result = response.data;
         break;
@@ -290,9 +405,20 @@ async function executeModel(
     return result;
   } catch (error: any) {
     if (axios.isAxiosError(error)) {
+      const errorMessage = error.response?.data?.error?.message 
+        || error.response?.data?.message 
+        || error.response?.data?.error 
+        || error.message;
+      
+      console.error('Model execution error:', {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: errorMessage
+      });
+      
       throw new ApiError(
         error.response?.status || 500,
-        `Model execution failed: ${error.response?.data?.error?.message || error.message}`
+        `Model execution failed: ${errorMessage}`
       );
     }
     throw error;
