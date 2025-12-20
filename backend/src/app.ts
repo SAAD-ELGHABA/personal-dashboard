@@ -31,7 +31,9 @@ app.use(morgan('dev'));
 app.use('/api/auth', authRouter);
 app.use('/api', apiRouter);
 app.use('/brain', brainRouter);
-
+app.use("/health", (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
 // Error handling
 app.use(errorHandler);
 
