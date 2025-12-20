@@ -13,30 +13,10 @@ const app = express();
 // Middleware
 app.use(helmet());
 
-// CORS Configuration
-const allowedOrigins = [
-  'http://localhost:5173',
-  'http://localhost:3000',
-  'https://elghabatech.vercel.app',
-  'https://elghabatech-backend.vercel.app',
-  // Add any custom domains or preview deployments
-  ...(config.corsOrigin ? config.corsOrigin.split(',').map(origin => origin.trim()) : [])
-];
-
+// CORS Configuration - Open for all origins (external projects + mobile apps)
 app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, Postman, curl, or native apps)
-    if (!origin) return callback(null, true);
-    
-    // Check if origin is in allowed list or if wildcard is enabled
-    if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
-      callback(null, true);
-    } else {
-      console.warn(`CORS blocked origin: ${origin}`);
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
+  origin: '*', // Allow all origins for external project access
+  credentials: false, // Set to false when using wildcard origin
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 }));
