@@ -21,9 +21,6 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 }));
 
-// Handle preflight requests explicitly
-app.options('*', cors());
-
 app.use(express.json());
 app.use(morgan('dev'));
 
@@ -31,16 +28,14 @@ app.use(morgan('dev'));
 app.use('/api/auth', authRouter);
 app.use('/api', apiRouter);
 app.use('/brain', brainRouter);
-app.use("/health", (req, res) => {
-  res.status(200).json({ status: 'ok' });
-});
-// Error handling
-app.use(errorHandler);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+
+// Error handling
+app.use(errorHandler);
 
 // 404 handler
 app.use((req, res) => {
