@@ -10,10 +10,10 @@ interface ProjectFormModalProps {
   onClose: () => void;
   onSubmit: (data: {
     name: string;
-    url?: string;
+    url: string;
     description: string;
     modelTypesAllowed: string[];
-    maxRequestSize?: number;
+    maxRequestSize: number;
   }) => void;
   modelTypes: ModelType[];
   project?: Project | null;

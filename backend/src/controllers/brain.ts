@@ -6,6 +6,9 @@ import { ModelType } from '../models/ModelType';
 import Service from '../models/Service';
 import { ApiError } from '../middleware/errorHandler';
 import axios from 'axios';
+import { modelLoadBalancer } from '../services/modelLoadBalancer';
+import { ModelStatistics } from '../models/ModelStatistics';
+import { ModelHealthStatus } from '../models/ModelHealthStatus';
 
 interface BrainRequest extends Request {
   projectId?: string;
@@ -138,26 +141,18 @@ export const runBrainModel = async (
       promptLength: activePrompt.promptText.length
     });
 
-    // Get an available model of this type
-    console.log('Looking for model with criteria:', {
+    // Get an available model of this type using intelligent load balancing
+    console.log('Using load balancer to select best model for type:', {
       typeId: modelTypeDoc._id,
-      status: 'active',
       projectId: project._id
     });
 
-    const model = await Model.findOne({
-      typeId: modelTypeDoc._id,
-      status: 'active',
-      $or: [
-        { projectsAssigned: project._id },
-        { isPublic: true },
-      ],
-    })
-      .select('+apiKey +encryptionIV')
-      .sort({ priority: -1, weight: -1 });
+    const model = await modelLoadBalancer.getBestModel(
+      modelTypeDoc._id,
+      project._id
+    );
 
-    console.log('Model lookup result:', {
-      found: !!model,
+    console.log('Load balancer selected model:', {
       modelName: model?.name,
       modelVersion: model?.version,
       modelProvider: model?.provider,
@@ -174,29 +169,59 @@ export const runBrainModel = async (
     // Build the prompt by combining service prompt with user input
     const fullPrompt = buildFullPrompt(activePrompt.promptText, input, options);
 
-    // Execute the model
-    const result = await executeModel(model, fullPrompt, options);
+    // Execute the model and track metrics
+    const startTime = Date.now();
+    let executionSuccess = false;
+    let executionError: string | undefined;
+    
+    try {
+      const result = await executeModel(model, fullPrompt, options);
+      executionSuccess = true;
+      
+      const latency = Date.now() - startTime;
+      
+      // Update model statistics and health in background (don't block response)
+      updateModelMetrics(model._id, latency, true).catch(err => 
+        console.error('Failed to update model metrics:', err)
+      );
 
-    // Return the result
-    res.json({
-      success: true,
-      data: {
-        result,
-        model: {
-          name: model.name,
-          version: model.version,
-          provider: model.provider,
+      // Return the result
+      res.json({
+        success: true,
+        data: {
+          result,
+          model: {
+            name: model.name,
+            version: model.version,
+            provider: model.provider,
+          },
+          service: {
+            id: service._id,
+            name: service.name,
+          },
+          prompt: {
+            id: activePrompt._id,
+            name: activePrompt.name,
+          },
+          metrics: {
+            latency,
+            cached: false, // Model selection was cached, but execution wasn't
+          },
         },
-        service: {
-          id: service._id,
-          name: service.name,
-        },
-        prompt: {
-          id: activePrompt._id,
-          name: activePrompt.name,
-        },
-      },
-    });
+      });
+    } catch (error) {
+      executionSuccess = false;
+      executionError = error instanceof Error ? error.message : 'Unknown error';
+      
+      const latency = Date.now() - startTime;
+      
+      // Update model statistics and health for failed request
+      updateModelMetrics(model._id, latency, false, executionError).catch(err => 
+        console.error('Failed to update model metrics:', err)
+      );
+      
+      throw error;
+    }
   } catch (error) {
     next(error);
   }
@@ -424,3 +449,203 @@ async function executeModel(
     throw error;
   }
 }
+
+/**
+ * Update model statistics and health status after execution
+ */
+async function updateModelMetrics(
+  modelId: any,
+  latencyMs: number,
+  success: boolean,
+  errorMessage?: string
+): Promise<void> {
+  try {
+    // Update statistics
+    const stats = await ModelStatistics.findOne({ modelId });
+    
+    if (stats) {
+      stats.totalRequests += 1;
+      if (success) {
+        stats.successfulRequests += 1;
+      } else {
+        stats.failedRequests += 1;
+      }
+      
+      // Update average latency with exponential moving average
+      // This gives more weight to recent measurements
+      if (stats.avgLatency === 0) {
+        stats.avgLatency = latencyMs;
+      } else {
+        stats.avgLatency = stats.avgLatency * 0.7 + latencyMs * 0.3;
+      }
+      
+      stats.lastUsedAt = new Date();
+      await stats.save();
+    } else {
+      // Create new statistics record
+      await ModelStatistics.create({
+        modelId,
+        totalRequests: 1,
+        successfulRequests: success ? 1 : 0,
+        failedRequests: success ? 0 : 1,
+        avgLatency: latencyMs,
+        lastUsedAt: new Date(),
+        monthlyUsage: 1,
+        monthlyLimit: 10000,
+      });
+    }
+
+    // Update health status
+    const health = await ModelHealthStatus.findOne({ modelId });
+    
+    if (health) {
+      health.lastCheckedAt = new Date();
+      health.latencyMs = latencyMs;
+      
+      // Calculate error rate from statistics
+      if (stats) {
+        health.errorRate = stats.totalRequests > 0 
+          ? (stats.failedRequests / stats.totalRequests) * 100 
+          : 0;
+      }
+      
+      // Model is healthy if:
+      // - Last request succeeded
+      // - Error rate is below 20%
+      // - Latency is below 10 seconds
+      health.isHealthy = success && health.errorRate < 20 && latencyMs < 10000;
+      
+      if (!success && errorMessage) {
+        health.lastError = errorMessage;
+      }
+      
+      await health.save();
+    } else {
+      // Create new health record
+      await ModelHealthStatus.create({
+        modelId,
+        lastCheckedAt: new Date(),
+        latencyMs,
+        errorRate: success ? 0 : 100,
+        isHealthy: success && latencyMs < 10000,
+        lastError: errorMessage,
+      });
+    }
+
+    console.log(`[Metrics] Updated for model ${modelId}: latency=${latencyMs}ms, success=${success}`);
+  } catch (error) {
+    console.error('Error updating model metrics:', error);
+    // Don't throw - metrics update failure shouldn't affect the main request
+  }
+}
+
+/**
+ * Get load balancer cache statistics
+ * GET /brain/v1/cache/stats
+ */
+export const getCacheStats = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const stats = modelLoadBalancer.getCacheStats();
+    
+    res.json({
+      success: true,
+      data: stats,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Clear load balancer cache
+ * POST /brain/v1/cache/clear
+ */
+export const clearCache = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { projectId, modelTypeId } = req.body;
+    
+    modelLoadBalancer.clearCache(projectId, modelTypeId);
+    
+    res.json({
+      success: true,
+      message: projectId && modelTypeId 
+        ? `Cache cleared for project ${projectId} and model type ${modelTypeId}`
+        : 'All cache cleared',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Evaluate models for a specific type without caching
+ * POST /brain/v1/models/evaluate
+ */
+export const evaluateModels = async (
+  req: BrainRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { modelType } = req.body;
+
+    if (!modelType) {
+      throw new ApiError(400, 'modelType is required');
+    }
+
+    // Validate project access
+    const token = req.headers.authorization!.substring(7);
+    const actualToken = token.startsWith('sk_proj_') ? token.substring(8) : token;
+    
+    const { project } = await projectService.validateProjectAccess(
+      actualToken,
+      modelType
+    );
+
+    // Get model type
+    const modelTypeDoc = await ModelType.findOne({
+      key: modelType,
+      isActive: true,
+    });
+
+    if (!modelTypeDoc) {
+      throw new ApiError(404, `Model type '${modelType}' not found or inactive`);
+    }
+
+    // Evaluate all models
+    const scoredModels = await modelLoadBalancer.evaluateModels(
+      modelTypeDoc._id,
+      project._id
+    );
+
+    // Format response
+    const modelsWithScores = scoredModels.map((scored) => ({
+      id: scored.model._id,
+      name: scored.model.name,
+      provider: scored.model.provider,
+      version: scored.model.version,
+      status: scored.model.status,
+      score: scored.score,
+      metrics: scored.metrics,
+    }));
+
+    res.json({
+      success: true,
+      data: {
+        modelType: modelTypeDoc.key,
+        totalModels: modelsWithScores.length,
+        models: modelsWithScores,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
