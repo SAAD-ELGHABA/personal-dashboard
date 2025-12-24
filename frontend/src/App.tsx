@@ -13,6 +13,7 @@ import { ModelTypes } from './pages/ModelTypes';
 import { Projects } from './pages/Projects';
 import { MyBlogs } from './pages/MyBlogs';
 import { ServiceDetails } from './pages/ServiceDetails';
+import BrainController from './components/BrainController.tsx';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { token, isLoading } = useAuth();
@@ -46,6 +47,7 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <BrainController/>
         <Routes>
           <Route path="/login" element={<Login />} />
           
